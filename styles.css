@@ -1,0 +1,6 @@
+#taskTable tr:nth-child(odd) td {
+    background-color: #fbfbfb
+} /*odd*/
+#taskTable tr:nth-child(even) td {
+    background-color: #e8ecee
+} /* even*/
