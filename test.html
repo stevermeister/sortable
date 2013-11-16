@@ -6,13 +6,13 @@
 </head>
 <body>
 
-<table id="taskTable" data-sortable="">
+<table id="taskTable" class="sortable">
     <tr>
         <th>Product Name</th>
         <th>Product Manufacturer</th>
         <th>Release Date</th>
-        <th data-sortable="number"><a href="#">Quantity</a></th>
-        <th>Purchase Value</th>
+        <th data-sortableType="number" data-sortableOrder="asc">Quantity</th>
+        <th data-sortableType="number" data-sortableOrder="desc">Purchase Value</th>
     </tr>
     <tr>
         <td>Samsung Galaxy S4</td>
@@ -55,6 +55,13 @@
         <td>October 2013</td>
         <td>34</td>
         <td>133068</td>
+    </tr>
+    <tr>
+        <td>G 3</td>
+        <td>LG</td>
+        <td>October 2013</td>
+        <td>34</td>
+        <td>1368</td>
     </tr>
     <tr>
         <td>Yoga 2 Pro</td>

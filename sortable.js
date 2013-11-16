@@ -1,82 +1,154 @@
-function parseTable(table){
-    var data = {headers:[], body:[]},
-        row,
-        rowData = [],
-        rows = table.tBodies[0].rows,
-        rowsNumber = rows.length,
-        cellsNumber = rows[0].cells.length;
+(function(){
 
-    //parse header
-    for(var j = 0; j < cellsNumber; j++){
-        rowData.push(rows[0].cells[j].textContent);
+    function Sortable(tableElement, tableData){
+
+        var self = this;
+
+        if(!tableData){
+            tableData = Sortable.parseTable(tableElement);
+        }
+
+        sort();
+
+        this.changeOrder = function(column){
+            if(tableData.order[column].direction === 'asc'){
+                tableData.order[column].direction = 'desc';
+            }else{
+                tableData.order[column].direction = 'asc';
+            }
+
+            sort();
+        }
+
+        function sort(){
+            tableElement.innerHTML = '';
+
+            tableData.body.sort(function(a, b){
+                var cmp;
+                for(column in tableData.order){
+                    cmp = compare(a[column], b[column], tableData.order[column].type);
+                    if(cmp !== 0){
+                        return tableData.order[column].direction === 'asc'?cmp:cmp*-1;
+                    }
+                }
+
+                function compare(a, b, type){
+                    if(type === 'number'){
+                        return parseFloat(a) - parseFloat(b);
+                    }else{
+                        if (a < b) return -1;
+                        if (a > b) return 1;
+                        return 0;
+                    }
+                }
+            });
+            drawTable(tableElement, tableData);
+        }
+
+
+        function drawTable(table, tableData){
+
+            drawTableHeader(table, tableData.header);
+            drawTableBody(table, tableData.body)
+        }
+
+        function drawTableHeader(table, tableHeaderData){
+            var sortlink,
+                cell,
+                row = document.createElement('tr');
+
+            for(var j=0, len2=tableHeaderData.length; j<len2; j++){
+                cell = document.createElement('th');
+                if(!tableHeaderData[j].order){
+                    cell.textContent = tableHeaderData[j].text;
+                }else{
+                    sortlink = document.createElement('a');
+                    sortlink.setAttribute('href', '#');
+                    sortlink.textContent = tableHeaderData[j].text;
+                    (function(j){
+                        sortlink.onclick = function(){
+                            self.changeOrder(j)
+                            console.log('click', j);
+                        }
+                    })(j);
+                    cell.appendChild(sortlink);
+                }
+
+                row.appendChild(cell);
+            }
+            table.appendChild(row);
+        }
+
+        function drawTableBody(table, tableBodyData){
+            var cell,
+                row = document.createElement('tr'),
+                tFragment = document.createDocumentFragment();
+
+            for(var i=0, len=tableBodyData.length; i<len; i++){
+
+                row = document.createElement('tr')
+
+                for(var j=0, len2=tableBodyData[i].length; j<len2; j++){
+                    cell = document.createElement('td');
+                    cell.textContent = tableBodyData[i][j];
+                    row.appendChild(cell);
+                }
+                tFragment.appendChild(row);
+            }
+            table.appendChild(tFragment);
+        }
+
     }
-    data.headers.push(rowData);
 
-    //parse body
-    for(var i = 1; i < rowsNumber; i++){
-        row = rows[i];
-        rowData = [];
+    Sortable.parseTable = function (tableElement){
+        var data = {header:[], body:[], order:{}},
+            cell,
+            row,
+            rowData = [],
+            rows = tableElement.tBodies[0].rows,
+            rowsNumber = rows.length,
+            cellsNumber = rows[0].cells.length;
+
+        //parse header
         for(var j = 0; j < cellsNumber; j++){
-            rowData.push(row.cells[j].textContent);
+            cell = rows[0].cells[j];
+
+
+            if(cell.getAttribute('data-sortableOrder')){
+                data.order[j] = {
+                    direction: cell.getAttribute('data-sortableOrder')?cell.getAttribute('data-sortableOrder'):'asc',
+                    type: cell.getAttribute('data-sortableType')?cell.getAttribute('data-sortableType'):'string'
+                };
+            }
+
+            data.header.push({
+                text:cell.textContent,
+                order: data.order[j]?true:false
+            });
+
         }
-        data.body.push(rowData);
-    }
-    return data;
-}
 
-function sort(data, order){
-
-}
-
-function drawTable(table, tableJsonData){
-    var cell,
-        row = document.createElement('tr'),
-        tFragment = document.createElement('documentFragment');
-
-    //draw header
-    for(var j=0, len2=tableJsonData.headers[0].length; j<len2; j++){
-        cell = document.createElement('th');
-        cell.textContent = tableJsonData.headers[0][j];
-        row.appendChild(cell);
-    }
-    tFragment.appendChild(row);
-
-    //draw body
-    for(var i=0, len=tableJsonData.body.length; i<len; i++){
-
-        row = document.createElement('tr')
-
-        for(var j=0, len2=tableJsonData.body[i].length; j<len2; j++){
-            cell = document.createElement('td');
-            cell.textContent = tableJsonData.body[i][j];
-            row.appendChild(cell);
+        //parse body
+        for(var i = 1; i < rowsNumber; i++){
+            row = rows[i];
+            rowData = [];
+            for(var j = 0; j < cellsNumber; j++){
+                rowData.push(row.cells[j].textContent);
+            }
+            data.body.push(rowData);
         }
-        tFragment.appendChild(row);
+        return data;
     }
-    console.log(tFragment)
-    table.appendChild(tFragment);
-}
-
-var table = document.getElementById("taskTable");
-var jsonTable = parseTable(table);
-table.innerHTML = '';
-drawTable(table, jsonTable);
 
 
-function tableSort(cell){
 
-    var tbl = document.getElementById("taskTable").tBodies[0];
-    var store = [];
-    for(var i=0, len=tbl.rows.length; i<len; i++){
-        var row = tbl.rows[i];
-        var sortnr = parseFloat(row.cells[cell].textContent || row.cells[cell].innerText);
-        if(!isNaN(sortnr)) store.push([sortnr, row]);
+
+
+    var tables = document.querySelectorAll('.sortable');
+    for(var i= 0, len = tables.length; i < len; i++){
+        Sortable(tables[i]);
     }
-    store.sort(function(x,y){
-        return x[0] - y[0];
-    });
-    for(var i=0, len=store.length; i<len; i++){
-        tbl.appendChild(store[i][1]);
-    }
-    store = null;
-}
+
+
+})();
+
